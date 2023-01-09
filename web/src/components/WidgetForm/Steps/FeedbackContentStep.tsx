@@ -1,10 +1,12 @@
-import { ArrowLeft, Camera } from 'phosphor-react'
+import { ArrowLeft } from 'phosphor-react'
 import { FormEvent, useState } from 'react'
 import { FeedbackType, feedbackTypes } from '..'
-import { api } from '../../../lib/api'
+import { supabase } from '../../../lib/supabase'
 import { CloseButton } from '../../CloseButton'
 import { Loading } from '../../Loading'
 import { ScreenshotButton } from '../ScreenshotButton'
+import ShortUniqueId from 'short-unique-id'
+import { api } from '../../../lib/api'
 
 interface FeedbackContentStepProps {
   feedbackType: FeedbackType
@@ -23,16 +25,48 @@ export function FeedbackContentStep({
 
   const feedbackTypeInfo = feedbackTypes[feedbackType]
 
+  const STORAGE_URL = `https://oxgapcqpowafqdnxqmoe.supabase.co/storage/v1/object/public/screenshots/`
+
   async function handleSubmmitFeedback(event: FormEvent) {
     event.preventDefault()
-
     setSendingFeedback(true)
 
-    await api.post('/feedbacks', {
-      type: feedbackType,
-      comment,
-      screenshot,
-    })
+    const uid = new ShortUniqueId({ length: 15 })
+    const fileName = `${uid()}.png`
+
+    const dataURLtoFile = (dataurl: any, filename: any) => {
+      var arr = dataurl.split(','),
+        mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]),
+        n = bstr.length,
+        u8arr = new Uint8Array(n)
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n)
+      }
+      return new File([u8arr], filename, { type: mime })
+    }
+
+    const file = dataURLtoFile(screenshot, fileName)
+
+    const imageUrl = STORAGE_URL + fileName
+    console.log('imageUrl', imageUrl);
+    
+
+    await supabase.storage
+      .from('screenshots')
+      .upload(fileName, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+      .then(async () => {
+        await api.post('/feedbacks', {
+          type: feedbackType,
+          comment,
+          screenshot: imageUrl,
+        })
+
+      })
+      .catch((error) => console.log(error))
 
     setSendingFeedback(false)
     onFeedbackSent()
