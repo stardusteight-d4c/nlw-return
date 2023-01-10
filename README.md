@@ -11,7 +11,7 @@
 > and build scripts, in addition to connecting different `Cloud Computing` services existing on the web such as `Backend as a Service (BaaS)`, `Cloud
 > Database or Database as a Service (DBaaS)`, `Storage as a Service ( STaaS)` and `Platform as a Service (PaaS)`.
 
-:arrow_right: Screenshot integration with Supabase Storage, Prisma ORM and Nodemailer <br />
+:arrow_right: Screenshot implementation with Supabase Storage, Prisma ORM and Nodemailer <br />
 :arrow_right: Repository Pattern and Dependency Injection (DI) <br />
 :arrow_right: Adapter Pattern <br />
 :arrow_right: Deployment Settings and Environment Variables <br />
