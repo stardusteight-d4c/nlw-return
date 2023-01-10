@@ -21,9 +21,6 @@ routes.post("/feedbacks", async (req: Request, res: Response) => {
       screenshot,
     });
 
-    console.log('screenshot', screenshot);
-    
-
     return res.status(201).send();
   } catch (err) {
     console.log(err);

@@ -16,8 +16,6 @@ export class SubmitFeedbackUseCase {
   async execute(request: SubmitFeedbackUseCaseRequest) {
     const { type, comment, screenshot } = request;
 
-    console.log("screenshot SubmitFeedbackUseCase", screenshot);
-
     if (!type) {
       throw new Error("Type is required.");
     }
@@ -26,16 +24,21 @@ export class SubmitFeedbackUseCase {
       throw new Error("Comment is required.");
     }
 
-    // if (screenshot && !screenshot.startsWith("data:image/png;base64")) {
-    //   throw new Error("Invalid screenshot format.");
-    // }
+    if (
+      screenshot &&
+      !screenshot.startsWith(
+        "https://oxgapcqpowafqdnxqmoe.supabase.co/storage/v1/object/public/screenshots/",
+      )
+    ) {
+      throw new Error("Invalid screenshot storage link.");
+    }
 
     await this.feedbacksRepository.create({
       type,
       comment,
       screenshot,
     });
-    // O gmail não suporta imagens em base64, criar um link para cada screenshot ou apenas mandar via ancora e a url para imagem??
+    
     await this.mailAdapter.sendMail({
       subject: "Novo feedback",
       body: [
