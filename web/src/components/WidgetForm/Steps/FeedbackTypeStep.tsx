@@ -9,16 +9,16 @@ export function FeedbackTypeStep({ onFeedbackTypeChanged }: FeedbackStepProps) {
   return (
     <>
       <header>
-        <span className="text-xl leading-6">Deixe seu feedback</span>
+        <span className={style.headerTitle}>Deixe seu feedback</span>
         <CloseButton />
       </header>
 
-      <div className="flex py-8 gap-2 w-full">
+      <div className={style.typesContentContainer}>
         {Object.entries(feedbackTypes).map(([key, value]) => {
           return (
             <button
               key={key}
-              className="bg-zinc-800 rounded-lg py-5 w-24 flex-1 flex flex-col items-center gap-2 border-2 border-transparent hover:border-brand-500 focus:border-brand-500 focus:outline-none"
+              className={style.selectTypeButton}
               onClick={() => onFeedbackTypeChanged(key as FeedbackType)}
               type="button"
             >
@@ -30,4 +30,10 @@ export function FeedbackTypeStep({ onFeedbackTypeChanged }: FeedbackStepProps) {
       </div>
     </>
   )
+}
+
+const style = {
+  headerTitle: `text-xl leading-6`,
+  typesContentContainer: `flex py-8 gap-2 w-full`,
+  selectTypeButton: `bg-zinc-800 rounded-lg py-5 w-24 flex-1 flex flex-col items-center gap-2 border-2 border-transparent hover:border-brand-500 focus:border-brand-500 focus:outline-none`,
 }

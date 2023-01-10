@@ -4,10 +4,15 @@ import { X } from 'phosphor-react'
 export function CloseButton() {
   return (
     <Popover.Button
-      className="top-5 right-5 absolute text-zinc-400 hover:text-zinc-100"
+      className={style.wrapper}
       title="Fechar Fomulário de Feedback"
     >
-      <X weight="bold" className="w-4 h-4" />
+      <X weight="bold" className={style.closeIcon} />
     </Popover.Button>
   )
+}
+
+const style = {
+  wrapper: `top-5 right-5 absolute text-zinc-400 hover:text-zinc-100`,
+  closeIcon: `w-4 h-4`,
 }
