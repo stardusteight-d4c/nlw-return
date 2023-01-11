@@ -207,3 +207,128 @@ So if there is a screenshot, the API call will only be made if the image was suc
 
 *<i>html2canvas.hertzen.com</i> <br />
 *<i>developer.mozilla.org/pt-BR/docs/Web/API/HTMLCanvasElement</i> <br />
+
+<br />
+
+## Repository Pattern and Dependency Injection (DI) 
+
+This is the application's only route and endpoint, a POST method that will send feedback to a database and send it to a specific email:
+
+```ts
+// src/routes.ts
+
+routes.post("/feedbacks", async (req: Request, res: Response) => {
+  const prismaFeedbacksRespository = new PrismaFeedbacksRespository();
+  const nodemailerMailAdapter = new NodemailerMailAdapter();
+  const submitFeedbackUseCase = new SubmitFeedbackUseCase(
+    prismaFeedbacksRespository,
+    nodemailerMailAdapter,
+  );
+
+  try {
+    const { type, comment, screenshot } = req.body;
+    await submitFeedbackUseCase.execute({
+      type,
+      comment,
+      screenshot,
+    });
+
+    return res.status(201).send();
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send();
+  }
+});
+```
+
+Note that this route provides some classes, such as `PrismaFeedbacksRespository()`, `NodemailerMailAdapter()` and `SubmitFeedbackUseCase()`, the first two classes are responsible for implementing the methods of `SubmitFeedbackUseCase()` so their instances are being passed to `SubmitFeedbackUseCase()`, because according to its `constructor` for such a class to be instantiated it is necessary to pass `two private properties`, that is `feedbacksRepository` and `mailAdapter` are dependencies of `SubmitFeedbackUseCase()`:
+
+```ts
+// src/use-cases/submit-feedback-use-case.ts
+
+import { MailAdapter } from "../adapters/mail-adapter";
+import { FeedbacksRepository } from "../repositories/feedbacks-repository";
+
+interface SubmitFeedbackUseCaseRequest {
+  type: string;
+  comment: string;
+  screenshot?: string;
+}
+
+export class SubmitFeedbackUseCase {
+  constructor(
+    private feedbacksRepository: FeedbacksRepository,
+    private mailAdapter: MailAdapter,
+  ) {}
+
+  async execute(request: SubmitFeedbackUseCaseRequest) {
+    const { type, comment, screenshot } = request;
+
+    if (!type) {
+      throw new Error("Type is required.");
+    }
+
+    if (!comment) {
+      throw new Error("Comment is required.");
+    }
+
+    if (
+      screenshot &&
+      !screenshot.startsWith(
+        "https://oxgapcqpowafqdnxqmoe.supabase.co/storage/v1/object/public/screenshots/",
+      )
+    ) {
+      throw new Error("Invalid screenshot storage link.");
+    }
+
+    await this.feedbacksRepository.create({
+      type,
+      comment,
+      screenshot,
+    });
+    
+    await this.mailAdapter.sendMail({
+      subject: "Novo feedback",
+      body: [
+        `<div style="font-family: sans-serif; font-size: 16px; color: #111;">`,
+        `<p>Tipo do feedback: ${type}</p>`,
+        `<p>Comentário: ${comment}</p>`,
+        screenshot
+          ? `<img src=${screenshot} style="width: 900px; height: 500px; display: inline-block; margin-inline: auto;" />`
+          : "",
+        `</div>`,
+      ].join("\n"),
+    });
+  }
+}
+```
+
+But these properties are just `interfaces`, `contracts` that must be implemented through other classes, then notice that the use case class `SubmitFeedbackUseCase()` is executing the methods of these properties `"feedbacksRepository and mailAdapter"` passing the data that is expected in the parameters, but those who implement the functionality are the classes responsible for implementing these contracts, that must implement all methods of the contract:
+
+```ts
+// src/repositories/feedbacks-repository.ts
+
+export interface FeedbackCreateData {
+  type: string;
+  comment: string;
+  screenshot?: string;
+}
+
+export interface FeedbacksRepository {
+  create: (data: FeedbackCreateData) => Promise<void>;
+}
+
+// src/repositories/prisma/prisma-feedbacks-repository.ts
+
+export class PrismaFeedbacksRespository implements FeedbacksRepository {
+  async create({ type, comment, screenshot }: FeedbackCreateData) {
+    await prisma.feedback.create({
+      data: {
+        type,
+        comment,
+        screenshot,
+      }
+    });
+  }
+}
+```
