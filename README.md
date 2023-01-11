@@ -332,3 +332,100 @@ export class PrismaFeedbacksRespository implements FeedbacksRepository {
   }
 }
 ```
+
+<br />
+
+## Adapter Pattern | Interfaces and Contracts 
+
+The Adapter has the role of converting the interface of a class into another interface expected by the clients. The Adapter allows certain classes to work together which would otherwise be impossible because of their incompatible interfaces. `With it, it is possible not to depend directly on code that is not in the domain of our application`.
+
+The Adapter pattern helps solve this problem (among many others) by adding an adapter under my domain in the application. `The function of the Adapter object is to adapt calls from within my application to the external framework or lib`.
+
+This can also be used for other purposes, such as adapting legacy code, adding functionality to classes, or doing any kind of adaptation needed by your application.
+
+<div align="center">
+<img src="adapter-class-by-luizomf.svg" width="1500" />
+</div>
+
+We can think of the Adapter as a `Coupling in Astronautics`, referring to the operation of establishing physical contact, that is, a physical connection between two spacecraft and activating the mechanisms to keep them in contact).
+
+It is widely used to define boundaries within application layers, for example in the `Domain Driven Design` model and following the principle of `Encapsulation`, the business logic, as well as the use cases must be completely decoupled from the infrastructure layer , that is `the core must not know about frameworks or databases`, so we use for example the `Repository Pattern` or `Adapter Pattern` to `encapsulate and protect the application from the infrastructure layer` to the logic layer of business and data access logic layer use cases.
+
+So in this application, as we don't want to depend on the logic and implementation of `Nodemailer` for sending email, so we make an interface that `SubmitFeedbackUseCase()` will be dependent on, but it will only know this interface and not the email sending logic with `Nodemailer`. Thus, the application will only depend on the `Adapter`, which is the `MailAdapter`, which can be coupled to any third-party library.
+
+```ts
+// src/adapters/mail-adapter.ts
+
+export interface SendMailData {
+  subject: string;
+  body: string;
+}
+
+export interface MailAdapter {
+  sendMail: (data: SendMailData) => Promise<void>;
+}
+
+// src/use-cases/submit-feedback-use-case.ts
+
+export class SubmitFeedbackUseCase {
+  constructor(
+    private feedbacksRepository: FeedbacksRepository,
+    private mailAdapter: MailAdapter,
+  ) {}
+
+  async execute(request: SubmitFeedbackUseCaseRequest) {
+    const { type, comment, screenshot } = request;
+
+    await this.feedbacksRepository.create({
+      type,
+      comment,
+      screenshot,
+    });
+    
+    await this.mailAdapter.sendMail({
+      subject: "Novo feedback",
+      body: [
+        `<div style="font-family: sans-serif; font-size: 16px; color: #111;">`,
+        `<p>Tipo do feedback: ${type}</p>`,
+        `<p>Comentário: ${comment}</p>`,
+        screenshot
+          ? `<img src=${screenshot} style="width: 900px; height: 500px; display: inline-block; margin-inline: auto;" />`
+          : "",
+        `</div>`,
+      ].join("\n"),
+    });
+  }
+}
+
+// src/adapters/nodemailer/nodemailer-mail-adapter.ts
+
+const transport = nodemailer.createTransport({
+  service: "Gmail",
+  host: "smtp.ethereal.email",
+  auth: {
+    user: "stardusteight.d4cc@gmail.com",
+    pass: process.env.TWO_STEP_VERIF_PASS, // get in google Two-step verification
+    // 1. Google Account 2. Security > Enable two-step verification 3. Generate app password
+  },
+});
+
+export class NodemailerMailAdapter implements MailAdapter {
+  async sendMail({ subject, body }: SendMailData) {
+    await transport.sendMail({
+      from: "Equipe Feedget <stardusteight.d4cc@gmail.com>",
+      to: "stardusteight.d4cc@gmail.com",
+      subject,
+      html: body,
+    });
+  }
+}
+```
+
+### Applicability
+
+ - you don't want your code to depend directly on third-party or legacy code;
+ - you want to use an existing class but its interface is not compatible with the interface your code or domain needs;
+ - you want to reuse several subclasses that don't have certain functionality but it's impractical to extend the code of each one just to add the desired functionality (Decorator does that too).
+
+*<i>youtube.com/watch?v=mSXnIOldzV8</i> <br />
+*<i>github.com/luizomf/design-patterns-typescript</i> <br />
