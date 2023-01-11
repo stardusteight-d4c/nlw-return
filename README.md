@@ -14,7 +14,7 @@
 :arrow_right: Screenshot implementation with Supabase Storage <br />
 :arrow_right: Repository Pattern and Dependency Injection (DI) <br />
 :arrow_right: Adapter Pattern | Interfaces and Contracts <br />
-:arrow_right: Deployment Settings and Environment Variables <br />
+:arrow_right: Deployment Settings | Environment Variables and Build & Deploy Scripts <br />
 
 <br />
 
@@ -429,3 +429,84 @@ export class NodemailerMailAdapter implements MailAdapter {
 
 *<i>youtube.com/watch?v=mSXnIOldzV8</i> <br />
 *<i>github.com/luizomf/design-patterns-typescript</i> <br />
+
+<br />
+
+## Deployment Settings | Environment Variables and Build & Deploy Scripts
+
+### Database
+
+In this topic I will detail the main points needed to deploy on an `Infrastructure as a service (IaaS)` or `Hardware as a Service (HaaS)` platform, such as `Planet Scale` to scale up a database MySQL data or `Railway` to host the backend server of some application.
+
+We already know that environment variables are essential to make our code run in different environments, whether development or production. For example, the backend of this application has the following environment variables in the `.env` file located in the `root directory` of the project:
+
+```
+.env
+
+TWO_STEP_VERIF_PASS="****"
+PORT="****"
+DATABASE_URL="****"
+SHADOW_DATABASE_URL="****"
+```
+
+So, in addition to protecting our credentials, we can change these variables when promoting the application to the production environment. For example, our cloud database hosted on `Planet Scale`, does not need any environment variable attached to the project, but rather provides a `connection url` already with the necessary credentials for our application to be able to access and make the necessary actions. operations, something like:
+
+```
+DATABASE_URL='mysql://d2mqykmsdfe5kbtshju0:************@aws-sa-east-1.connect.psdb.cloud/feedbacks?sslaccept=strict'
+```
+
+In development we can change this url to one that indicates a local file like `"file:./dev.db"` that will serve as `SQLite database`, in production we must reference a database also in production.
+
+### Promote to production
+
+To deploy a backend server for an application on the web, we prefer to configure the `build scripts`, which will compile the files in `TypeScript` to `JavaScript`, `install the project's dependencies and prepare the proper environment to run our server`: 
+
+```json
+"scripts": {
+  "test": "jest",
+  "dev": "nodemon src/server.ts",
+  "build": "npm install && npx prisma generate && npm run compile",
+  "compile": "tsc",
+  "start": "node dist/server.js"
+},
+```
+
+The `"build"` script above will install the project dependencies with `npm install`, generate the Prisma Client and install the @prisma/client, which you will need to re-run the `npx prisma generate` command after every change made to your Prisma schema to update the generated Prisma Client code, and finally it will compile our TypeScript code to JavaScript with the `npm run compile` command which executes `tsc` and thus generates our production directory in the `dist` folder. However, for `tsc` to run as expected, we must configure the `tsconfig.json` file, there are several options there that can disrupt the execution of our code at build time, such as leaving the `Watch Mode` enabled and thus `tsc` command will never finish executing, you also need to specify the `rootDir` the `root directory` of the project in which the TypeScript compiler should work to generate the `JavaScript` files, as well as the `outDir` which case not specified, the JS files will be generated in the same directories as the TS files.
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "CommonJS",
+    "allowJs": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strictPropertyInitialization": false,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "ts-node": {
+    "transpileOnly": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+By running the `"build"` script we will have our `"dist"` directory ready to be run in production:
+
+<div align="center">
+<img src="dist-directory.png" width="250" />
+</div>
+
+And so to run our server, just run the `"start"` script specified in `package.json`. `Which will execute our file that serves as a gateway for our application`, which is in `/dist/server.js`.
+
+### Deploy Platform Specifications
+
+Finally, when deploying, we must inform the `"build"` command that will prepare the production environment, and the `"start"` command that is responsible for executing the script that will initialize the application, basically all platforms deploys follow a structure like this, where you enter the root directory of the application's repository, configure the `environment variables` and the `build and deploy commands`:
+
+<div align="center">
+<img src="deploy-platform.png" width="500" />
+</div>
