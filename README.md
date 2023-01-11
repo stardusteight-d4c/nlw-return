@@ -344,7 +344,7 @@ The Adapter pattern helps solve this problem (among many others) by adding an ad
 This can also be used for other purposes, such as adapting legacy code, adding functionality to classes, or doing any kind of adaptation needed by your application.
 
 <div align="center">
-<img src="adapter-class-by-luizomf.svg" width="1500" />
+<img src="adapter-class-by-luizomf.png" width="1500" />
 </div>
 
 We can think of the Adapter as a `Coupling in Astronautics`, referring to the operation of establishing physical contact, that is, a physical connection between two spacecraft and activating the mechanisms to keep them in contact).
