@@ -13,7 +13,7 @@
 
 :arrow_right: Screenshot implementation with Supabase Storage <br />
 :arrow_right: Repository Pattern and Dependency Injection (DI) <br />
-:arrow_right: Adapter Pattern <br />
+:arrow_right: Adapter Pattern | Interfaces and Contracts <br />
 :arrow_right: Deployment Settings and Environment Variables <br />
 
 <br />
