@@ -29,38 +29,46 @@ export function FeedbackContentStep({
     event.preventDefault()
     setSendingFeedback(true)
 
-    const uid = new ShortUniqueId({ length: 15 })
-    const fileName = `${uid()}.png`
+    if (screenshot) {
+      const uid = new ShortUniqueId({ length: 15 })
+      const fileName = `${uid()}.png`
 
-    function dataURLtoFile(dataurl: any, filename: string) {
-      var arr = dataurl.split(','),
-        mime = arr[0].match(/:(.*?);/)[1],
-        bstr = atob(arr[1]),
-        n = bstr.length,
-        u8arr = new Uint8Array(n)
-      while (n--) {
-        u8arr[n] = bstr.charCodeAt(n)
+      function dataURLtoFile(dataurl: any, filename: string) {
+        var arr = dataurl.split(','),
+          mime = arr[0].match(/:(.*?);/)[1],
+          bstr = atob(arr[1]),
+          n = bstr.length,
+          u8arr = new Uint8Array(n)
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n)
+        }
+        return new File([u8arr], filename, { type: mime })
       }
-      return new File([u8arr], filename, { type: mime })
-    }
 
-    const file = dataURLtoFile(screenshot, fileName)
-    const imageUrl = STORAGE_URL + fileName
+      const file = dataURLtoFile(screenshot, fileName)
+      const imageUrl = STORAGE_URL + fileName
 
-    await supabase.storage
-      .from('screenshots')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
-      .then(async () => {
-        await api.post('/feedbacks', {
-          type: feedbackType,
-          comment,
-          screenshot: imageUrl,
+      await supabase.storage
+        .from('screenshots')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
         })
+        .then(async () => {
+          await api.post('/feedbacks', {
+            type: feedbackType,
+            comment,
+            screenshot: imageUrl,
+          })
+        })
+        .catch((error) => console.log(error))
+    } else {
+      await api.post('/feedbacks', {
+        type: feedbackType,
+        comment,
+        screenshot,
       })
-      .catch((error) => console.log(error))
+    }
 
     setSendingFeedback(false)
     onFeedbackSent()
