@@ -476,7 +476,7 @@ export class NodemailerMailAdapter implements MailAdapter {
 
 <br />
 
-### Deployment Settings: Environment Variables and Build & Deploy Scripts
+### Deployment Settings: Environment Variables, Build & Deploy Scripts
 
 #### Database
 
